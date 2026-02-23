@@ -1,0 +1,83 @@
+import streamlit as st
+import google.generativeai as genai
+
+# --- 1. SETUP & PAGE CONFIG ---
+st.set_page_config(page_title="BAGESHWAR DHAM", page_icon="🙏", layout="centered")
+
+# --- 2. THE DESIGN (Visuals) ---
+# Replace the URL below with a real photo link of Maharaj-ji
+BG_IMAGE_URL = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=2000" 
+
+st.markdown(f"""
+    <style>
+    .stApp {{
+        background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url("{BG_IMAGE_URL}");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }}
+    .stChatMessage {{
+        background-color: rgba(255, 255, 255, 0.9) !important;
+        border-radius: 20px !important;
+        padding: 15px !important;
+        margin-bottom: 10px !important;
+        color: #1E1E1E !important;
+    }}
+    h1, h3 {{
+        color: #FFCC00 !important;
+        text-shadow: 2px 2px 4px #000000;
+        text-align: center;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+st.title("🙏 BAGESHWAR DHAM")
+st.markdown("### बागेश्वर बालाजी की महिमा - समाधान तुरंत")
+
+# --- 3. API KEY LOGIC ---
+# Put your API Key here. Get it for free at: https://aistudio.google.com/
+API_KEY = "YOUR_GOOGLE_API_KEY" 
+
+if API_KEY == "YOUR_GOOGLE_API_KEY":
+    st.warning("⚠️ Please enter your API Key in the code to start.")
+    st.stop()
+
+# Configure the AI
+genai.configure(api_key=API_KEY)
+
+# --- 4. THE PERSONALITY (System Prompt) ---
+instruction = (
+    "You are the AI version of Bageshwar Dham Sarkar (Pandit Dhirendra Krishna Shastri). "
+    "Always start with 'Sitaram'. Talk like a spiritual guru. "
+    "Help people with their problems using wisdom from Balaji and Sanatan Dharma. "
+    "Keep answers very fast and clear. Use Hindi-English mixed (Hinglish)."
+)
+
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash", # 'Flash' is the fastest model for quick answers
+    system_instruction=instruction
+)
+
+# --- 5. CHAT HISTORY (Remembers what you said) ---
+if "chat_session" not in st.session_state:
+    st.session_state.chat_session = model.start_chat(history=[])
+
+# Display old messages
+for message in st.session_state.chat_session.history:
+    with st.chat_message("user" if message.role == "user" else "assistant"):
+        st.markdown(message.parts[0].text)
+
+# --- 6. USER INPUT & QUICK RESPONSE ---
+if prompt := st.chat_input("अपनी अर्जी यहाँ लगायें... (Ask your question)"):
+    # Show user message
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Get AI response
+    with st.chat_message("assistant"):
+        with st.spinner("Balaji is answering..."):
+            try:
+                response = st.session_state.chat_session.send_message(prompt)
+                st.markdown(response.text)
+            except Exception as e:
+                st.error(f"Error: {e}. Please check your internet or API key.")
